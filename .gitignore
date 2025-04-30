@@ -1,0 +1,11 @@
+# visual studio extentions
+.vs
+obj
+bin
+*.user
+
+# JetBrains
+.idea/
+
+# Docker
+*.env
