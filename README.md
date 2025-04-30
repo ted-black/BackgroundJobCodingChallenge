@@ -5,7 +5,7 @@ process maintains a thread safe queue of items. A worker pool is managed
 by the worker process, so that tasks (workers) can be scaled up or down
 depending on workload, max concurrency and scaling threshold. The worker
 process can do item or batch processing. Developers can extend the functionality
-by adding methods to the JobProcess class, and statements to the WorkerFactory class.**
+by implementing the Worker class, adding methods to the JobProcess class, and adding conditions to the WorkerFactory class.**
 
 ![](./image1.png)
 
