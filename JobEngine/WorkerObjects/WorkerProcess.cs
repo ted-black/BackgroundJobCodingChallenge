@@ -1,12 +1,11 @@
 ﻿using BackgroundJobCodingChallenge.JobEngine.Model;
-using BackgroundJobCodingChallenge.JobEngine.WorkerObjects;
 using BackgroundJobCodingChallenge.JobEngine.WorkerObjects.Workitem;
 using BackgroundJobCodingChallenge.Services;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Collections.Concurrent;
 
-namespace BackgroundJobCodingChallenge.JobEngine;
+namespace BackgroundJobCodingChallenge.JobEngine.WorkerObjects;
 
 /// <summary>
 /// This class is responsible for managing the distribution of work items to worker threads.

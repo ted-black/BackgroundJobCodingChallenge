@@ -15,10 +15,10 @@ namespace BackgroundJobCodingChallenge.JobEngine;
 /// <param name="scalingThreshold"></param>
 /// <param name="retryLimit"></param>
 /// <param name="logger"></param>
-public class JobProcess(IDatabaseService databaseService, int maxConcurrency = 10, int scalingThreshold = 5, int retryLimit = 3, ILogger? logger = null)
+public class JobProcess(IDatabaseService databaseService, int maxConcurrency = 10, int scalingThreshold = 5, int retryLimit = 3, ILogger? logger = null) : IJobProcess
 {
     /// <summary>
-    /// Processes messages from a queue service.
+    /// <inheritdoc cref="IJobProcess.ProcessQueueMessages(IQueueService{IWorkItem}, CancellationToken)"/>/>
     /// </summary>
     /// <param name="queueService"></param>
     /// <param name="cancellationToken"></param>
@@ -64,7 +64,7 @@ public class JobProcess(IDatabaseService databaseService, int maxConcurrency = 1
     }
 
     /// <summary>
-    /// Processes cursor data from a trigger service.
+    /// <inheritdoc cref="IJobProcess.ProcessCursorData(ITriggerService, IConnectionMultiplexer, HttpClient, CancellationToken)"/>
     /// </summary>
     /// <param name="triggerService"></param>
     /// <param name="connectionMultiplexer"></param>
@@ -96,7 +96,7 @@ public class JobProcess(IDatabaseService databaseService, int maxConcurrency = 1
     }
 
     /// <summary>
-    /// Processes user upload data.
+    /// <inheritdoc cref="IJobProcess.ProcessUserUploadData(IDatabaseService, CancellationToken)"/>
     /// </summary>
     /// <param name="databaseService"></param>
     /// <param name="cancellationToken"></param>
