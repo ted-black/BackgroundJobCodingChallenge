@@ -6,7 +6,7 @@ by the worker process, so that tasks (workers) can be scaled up or down
 depending on workload, max concurrency and scaling threshold. The worker
 process can do item or batch processing. Developers can extend the functionality
 by implementing the Worker class, adding methods to the JobProcess class, and adding conditions to the WorkerFactory class.
-JobProcess can be injected as a singleton, or WorkerProcess can be implemented directly in a local scope.**
+JobProcess can be injected as a singleton, or WorkerProcess can be instantiated directly in a local scope.**
 
 ![](./image1.png)
 
