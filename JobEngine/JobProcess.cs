@@ -15,8 +15,7 @@ namespace BackgroundJobCodingChallenge.JobEngine;
 /// <param name="scalingThreshold"></param>
 /// <param name="retryLimit"></param>
 /// <param name="logger"></param>
-public class JobProcess(IDatabaseService databaseService, int maxConcurrency = 10, int scalingThreshold = 5, int retryLimit = 3, ILogger? logger = null) 
-    : WorkerProcess(databaseService, maxConcurrency, scalingThreshold, retryLimit, logger)
+public class JobProcess(IDatabaseService databaseService, int maxConcurrency = 10, int scalingThreshold = 5, int retryLimit = 3, ILogger? logger = null)
 {
     /// <summary>
     /// Processes messages from a queue service.
@@ -26,6 +25,7 @@ public class JobProcess(IDatabaseService databaseService, int maxConcurrency = 1
     /// <returns></returns>
     public async Task ProcessQueueMessages(IQueueService<IWorkItem> queueService, CancellationToken cancellationToken)
     {
+        WorkerProcess<MessageProcessingWorker> workerProcess = new(databaseService, maxConcurrency, scalingThreshold, retryLimit, logger);
         Action<IWorkItem, CancellationToken> processAction = async (message, token) =>
         {
             try
@@ -33,17 +33,17 @@ public class JobProcess(IDatabaseService databaseService, int maxConcurrency = 1
                 // Check for cancellation
                 cancellationToken.ThrowIfCancellationRequested();
                 // Process the message
-                await DistributeWorkAsync<MessageProcessingWorker>(message);
+                await workerProcess.DistributeWorkAsync(message);
             }
             catch (OperationCanceledException)
             {
                 // Handle cancellation
-                _logger?.LogInformation("Processing cancelled.");
+                logger?.LogInformation("Processing cancelled.");
             }
             catch (Exception ex)
             {
                 // Handle other exceptions
-                _logger?.LogError(ex, "Error processing message.");
+                logger?.LogError(ex, "Error processing message.");
             }
         };
 
@@ -54,10 +54,10 @@ public class JobProcess(IDatabaseService databaseService, int maxConcurrency = 1
         queueService.ListenForMessages();
 
         // Wait for completion
-        await WaitForCompletionAsync(cancellationToken);
+        await workerProcess.WaitForCompletionAsync(cancellationToken);
 
         // Retry failed items
-        await RetryFailedItemsAsync(cancellationToken);
+        await workerProcess.RetryFailedItemsAsync(cancellationToken);
 
         // Unsubscribe from messages
         queueService.UnsubscribeFromMessages(processAction);
@@ -76,10 +76,13 @@ public class JobProcess(IDatabaseService databaseService, int maxConcurrency = 1
         // Create the cursor cache
         CursorCache cursorCache = new CursorCache(connectionMultiplexer, httpClient, Environment.GetEnvironmentVariable(Constant.WorkerProcess.FinancialSystemEndpoint) ?? "", logger);
 
+        // Create the worker process
+        WorkerProcess<FinancialDataWorker> workerProcess = new(databaseService, maxConcurrency, scalingThreshold, retryLimit, logger);
+
         // Define the action to be performed for each cursor
         Action<CancellationToken> cursorAction = async (token) =>
         {
-            await DistributeWorkAsync<FinancialDataWorker>(cursorCache, token);
+            await workerProcess.DistributeWorkAsync(cursorCache, token);
         };
 
         // Subscribe to cursor data
@@ -100,6 +103,9 @@ public class JobProcess(IDatabaseService databaseService, int maxConcurrency = 1
     /// <returns></returns>
     public async Task ProcessUserUploadData(IDatabaseService databaseService, CancellationToken cancellationToken)
     {
+        // Create the worker process
+        WorkerProcess<UserProcessingWorker> workerProcess = new(databaseService, maxConcurrency, scalingThreshold, retryLimit, logger);
+
         // Get the user info from the database
         IEnumerable<UserInfo> userInfo = await databaseService.GetUploadedAsync<UserInfo>();
 
@@ -107,7 +113,7 @@ public class JobProcess(IDatabaseService databaseService, int maxConcurrency = 1
         if (userInfo != null)
         {
             // Process the user info
-            await DistributeWorkAsync<UserProcessingWorker>([.. userInfo], cancellationToken);
+            await workerProcess.DistributeWorkAsync([.. userInfo], cancellationToken);
         }
     }
 

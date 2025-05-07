@@ -11,7 +11,7 @@ namespace BackgroundJobCodingChallenge.JobEngine;
 /// <summary>
 /// This class is responsible for managing the distribution of work items to worker threads.
 /// </summary>
-public abstract class WorkerProcess
+public class WorkerProcess<T> where T : IWorker
 {
     protected readonly WorkQueue<IWorkItem> _workQueue = new();
     protected readonly ConcurrentQueue<IWorkItem> _failedItems = new();
@@ -28,7 +28,7 @@ public abstract class WorkerProcess
     /// <param name="scalingThreshold"></param>
     /// <param name="retryLimit"></param>
     /// <param name="logger"></param>
-    protected WorkerProcess(IDatabaseService databaseService, int maxConcurrency = 10, int scalingThreshold = 5, int retryLimit = 3, ILogger? logger = null)
+    public WorkerProcess(IDatabaseService databaseService, int maxConcurrency = 10, int scalingThreshold = 5, int retryLimit = 3, ILogger? logger = null)
     {
         _workerPool = new WorkerPool(_workQueue, _failedItems, maxConcurrency, databaseService, logger);
         _scalingThreshold = scalingThreshold;
@@ -43,7 +43,7 @@ public abstract class WorkerProcess
     /// <param name="workload"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    protected async Task DistributeWorkAsync<T>(IWorkItem[] workload, CancellationToken cancellationToken) where T : IWorker
+    public async Task DistributeWorkAsync(IWorkItem[] workload, CancellationToken cancellationToken)
     {
         foreach (IWorkItem item in workload)
         {
@@ -53,12 +53,12 @@ public abstract class WorkerProcess
             // Adjust worker count in batches
             if (_workQueue.Count % _scalingThreshold == 0)
             {
-                AdjustWorkerCount<T>();
+                AdjustWorkerCount();
             }
         }
 
         // Final adjustment after all items are added
-        AdjustWorkerCount<T>();
+        AdjustWorkerCount();
 
         await WaitForCompletionAsync(cancellationToken);
 
@@ -72,14 +72,14 @@ public abstract class WorkerProcess
     /// <typeparam name="T"></typeparam>
     /// <param name="item"></param>
     /// <returns></returns>
-    protected Task DistributeWorkAsync<T>(IWorkItem item) where T : IWorker
+    public Task DistributeWorkAsync(IWorkItem item)
     {
         _workQueue.Add(item);
 
         // Adjust worker count in batches
         if (_workQueue.Count % _scalingThreshold == 0)
         {
-            AdjustWorkerCount<T>();
+            AdjustWorkerCount();
         }
 
         return Task.CompletedTask;
@@ -92,7 +92,7 @@ public abstract class WorkerProcess
     /// <param name="cursorCache"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    protected async Task DistributeWorkAsync<T>(CursorCache cursorCache, CancellationToken cancellationToken) where T : IWorker
+    public async Task DistributeWorkAsync(CursorCache cursorCache, CancellationToken cancellationToken)
     {
         FinancialDataResponse? response = await cursorCache.RetrieveFinancialDataAsync();
 
@@ -103,13 +103,13 @@ public abstract class WorkerProcess
             // Adjust worker count in batches
             if (_workQueue.Count % _scalingThreshold == 0)
             {
-                AdjustWorkerCount<T>();
+                AdjustWorkerCount();
             }
             response = await cursorCache.RetrieveFinancialDataAsync();
         }
 
         // Final adjustment after all items are added
-        AdjustWorkerCount<T>();
+        AdjustWorkerCount();
 
         await WaitForCompletionAsync(cancellationToken);
 
@@ -122,7 +122,7 @@ public abstract class WorkerProcess
     /// </summary>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    protected async Task WaitForCompletionAsync(CancellationToken cancellationToken)
+    public async Task WaitForCompletionAsync(CancellationToken cancellationToken)
     {
         Log(JsonConvert.SerializeObject(GetMetrics()));
         await _workerPool.WaitForCompletionAsync(cancellationToken);
@@ -133,7 +133,7 @@ public abstract class WorkerProcess
     /// Adjusts the number of workers based on the current queue size and scaling threshold.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    protected void AdjustWorkerCount<T>() where T : IWorker
+    private void AdjustWorkerCount()
     {
         int queueSize = _workQueue.Count;
         int targetWorkers = Math.Min(_workerPool.MaxConcurrency, Math.Max(1, queueSize / _scalingThreshold));
@@ -154,7 +154,7 @@ public abstract class WorkerProcess
     /// </summary>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    protected async Task RetryFailedItemsAsync(CancellationToken cancellationToken)
+    public async Task RetryFailedItemsAsync(CancellationToken cancellationToken)
     {
         int retryCount = 0;
 
@@ -188,7 +188,7 @@ public abstract class WorkerProcess
     /// Shuts down the dispatcher and all workers.
     /// </summary>
     /// <param name="force"></param>
-    protected void Shutdown(bool force = false)
+    public void Shutdown(bool force = false)
     {
         Log("Shutting down dispatcher...");
         _workerPool.Shutdown(force);
@@ -198,7 +198,7 @@ public abstract class WorkerProcess
     /// Gets the current metrics of the worker process.
     /// </summary>
     /// <returns></returns>
-    protected WorkerProcessMetrics GetMetrics()
+    private WorkerProcessMetrics GetMetrics()
     {
         return new (_workQueue.Count, _workerPool.CurrentWorkerCount, _failedItems.Count, _workerPool.TotalItemsProcessed);
     }
@@ -207,7 +207,7 @@ public abstract class WorkerProcess
     /// Logs a message to the logger if available.
     /// </summary>
     /// <param name="message"></param>
-    protected void Log(string message)
+    private void Log(string message)
     {
         if (_logger != null)
         {
