@@ -23,7 +23,6 @@ public class WorkerPool(WorkQueue<IWorkItem> workQueue, ConcurrentQueue<IWorkIte
     private readonly ConcurrentBag<Task> _workers = new();
     private readonly ConcurrentBag<CancellationTokenSource> _workerTokens = new();
     private readonly object _lock = new();
-    private readonly int _scalingThreshold = 10;
     private int _totalItemsProcessed;
 
     public int TotalItemsProcessed => _totalItemsProcessed;

@@ -38,7 +38,6 @@ public class WorkerProcess<T> where T : IWorker
     /// <summary>
     /// Distributes work items to workers.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     /// <param name="workload"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
@@ -68,7 +67,6 @@ public class WorkerProcess<T> where T : IWorker
     /// <summary>
     /// Distributes a single work item to workers.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     /// <param name="item"></param>
     /// <returns></returns>
     public Task DistributeWorkAsync(IWorkItem item)
@@ -87,7 +85,6 @@ public class WorkerProcess<T> where T : IWorker
     /// <summary>
     /// Distributes work items from a cursor cache to workers.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     /// <param name="cursorCache"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
@@ -131,7 +128,6 @@ public class WorkerProcess<T> where T : IWorker
     /// <summary>
     /// Adjusts the number of workers based on the current queue size and scaling threshold.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     private void AdjustWorkerCount()
     {
         int queueSize = _workQueue.Count;

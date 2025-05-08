@@ -16,12 +16,12 @@ public class CursorCache(IConnectionMultiplexer _redis, HttpClient client, strin
         IDatabase _db = _redis.GetDatabase();
         string? cursor = await _db.StringGetAsync("financial_cursor");
 
-        logger.LogInformation("Fetching data with cursor: {Cursor}", cursor);
+        logger?.LogInformation("Fetching data with cursor: {Cursor}", cursor);
         var response = await client.GetAsync($"{endpoint}?cursor={cursor}");
 
         if (!response.IsSuccessStatusCode)
         {
-            logger.LogError("API failure. Status: {StatusCode}, Cursor: {Cursor}", response.StatusCode, cursor);
+            logger?.LogError("API failure. Status: {StatusCode}, Cursor: {Cursor}", response.StatusCode, cursor);
             throw new EntryPointNotFoundException("API failure");
         }
 
@@ -31,9 +31,9 @@ public class CursorCache(IConnectionMultiplexer _redis, HttpClient client, strin
 
         await _db.StringSetAsync("financial_cursor", cursor); // Update cursor in Redis
 
-        logger.LogInformation("Processed cursor: {Cursor}", cursor);
+        logger?.LogInformation("Processed cursor: {Cursor}", cursor);
 
-        logger.LogInformation("Completed fetching financial data.");
+        logger?.LogInformation("Completed fetching financial data.");
 
         return result;
     }
