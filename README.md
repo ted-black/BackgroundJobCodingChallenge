@@ -88,7 +88,7 @@ JobProcess can be injected as a singleton, or WorkerProcess can be instantiated 
 
 **JobProcess Class Summary**
 
-**The JobProcess class extends WorkerProcess and manages various job
+**The JobProcess class instantiates WorkerProcess and manages various job
 types, including message processing, cursor-based data retrieval, and
 user uploads.**
 
